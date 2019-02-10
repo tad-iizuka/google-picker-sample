@@ -1,5 +1,16 @@
 # google-picker-sample
 
+Vue.js + Vuetify.js + [Picker API Developer's Guide](https://developers.google.com/picker/docs/)
+
+Before run serve, you should change configration.
+```
+config: {
+        developerKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', // CHANGE TO YOUR KEY
+        clientId: 'XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.apps.googleusercontent.com', // CHANGE YOUR CLIENT ID
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        appId: 'XXXXXXXXXXXX' // CHANGE YOUR PROJECT NUMBER
+      },
+```
 ## Project setup
 ```
 npm install
