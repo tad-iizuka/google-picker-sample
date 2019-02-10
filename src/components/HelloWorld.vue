@@ -1,58 +1,109 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <v-container fluid fill-height>
+    <v-layout
+      text-xs-center
+      wrap
+      justify-center row align-center
+    >
+      <v-flex
+        mb-5
+        xs12
+      >
+        <v-flex>
+          <v-btn round color="blue" class="white--text" @click="onDownload()">DOWNLOAD FROM GOOGLE DRIVE</v-btn>
+        </v-flex>
+        <v-flex>
+          <v-btn round color="orange" class="white--text" @click="onUpload()">UPLOAD TO GOOGLE DRIVE</v-btn>
+        </v-flex>
+      </v-flex>
+    </v-layout>
+  </v-container>
 </template>
 
 <script>
+/* eslint-disable */
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  data () {
+    return {
+      type: null,
+      config: {
+        developerKey: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', // CHANGE TO YOUR KEY
+        clientId: 'XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.apps.googleusercontent.com', // CHANGE YOUR CLIENT ID
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        appId: 'XXXXXXXXXXXX' // CHANGE YOUR PROJECT NUMBER
+      },
+      pickerApiLoaded: false,
+      oAuthToken: null
+    }
+  },
+  mounted () {
+    if (!window.gapi) {
+      return
+    }
+    window.gapi.load('auth2', () => {
+      window.gapi.load('picker', () => {
+        this.pickerApiLoaded = true
+      })
+    })
+  },
+  methods: {
+    handleAuthResult (authResult) {
+      if (authResult && !authResult.error) {
+        this.oAuthToken = authResult.access_token
+        this.createPicker()
+      } else {
+        return console.warn(authResult.details)
+      }
+    },
+    onDownload () {
+      this.type = 'download'
+      this.handleButton()
+    },
+    onUpload () {
+      this.type = 'upload'
+      this.handleButton()
+    },
+    handleButton () {
+      if (!this.oAuthToken) {
+        window.gapi.auth2.authorize({
+          client_id: this.config.clientId,
+          scope: this.config.scope
+        }, this.handleAuthResult)
+      } else {
+        this.createPicker()
+      }
+    },
+    createPicker () {
+      if (this.pickerApiLoaded && this.oAuthToken) {
+        var view = new google.picker.DocsView()
+        view.setIncludeFolders(true)
+        if (this.type === 'upload')  {
+          view = new google.picker.DocsUploadView()
+          view.setIncludeFolders(true)
+        }
+        var picker = new google.picker.PickerBuilder()
+          .enableFeature(google.picker.Feature.NAV_HIDDEN)
+          .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+          .setAppId(this.config.appId)
+          .setOAuthToken(this.oAuthToken)
+          .addView(view)
+          .addView(new google.picker.DocsUploadView())
+          .setLocale('ja')
+          .setDeveloperKey(this.config.developerKey)
+          .setCallback(this.pickerCallback)
+          .build()
+        picker.setVisible(true)
+      }
+    },
+    pickerCallback (data) {
+      if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+        console.log(data)
+      }
+    }    
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+<style>
+
 </style>
